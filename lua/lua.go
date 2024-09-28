@@ -470,6 +470,8 @@ var lua struct {
 	concat func(L State, n int32)         `lua:"lua_concat"`
 }
 
+// @todo(judah): maybe it's just better to let the user pass a library handle in
+
 func init() {
 	handle := openlib()
 	bindFuncPointers(&lua, handle)

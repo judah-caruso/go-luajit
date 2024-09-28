@@ -8,6 +8,12 @@
 go get github.com/judah-caruso/go-luajit@latest
 ```
 
+Copy the appropriate libraries from this directory into your project:
+
+- `libluajit.dll` (Windows)
+- `libluajit.dylib` (Mac)
+- `libluajit.so` (Linux)
+
 ## Examples
 
 ```go

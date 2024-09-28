@@ -1,4 +1,4 @@
-//go:build unix && !darwin
+//go:build darwin && !unix
 
 package lua
 
@@ -7,7 +7,7 @@ import (
 )
 
 func openlib() uintptr {
-	handle, err := purego.Dlopen("libluajit.so", purego.RTLD_LAZY|purego.RTLD_GLOBAL)
+	handle, err := purego.Dlopen("libluajit.dylib", purego.RTLD_LAZY|purego.RTLD_GLOBAL)
 	if err != nil {
 		panic(err)
 	}

@@ -1,3 +1,5 @@
+//go:build windows
+
 package lua
 
 import (
@@ -5,7 +7,7 @@ import (
 )
 
 func openlib() uintptr {
-	handle, err := windows.LoadLibrary("luajit.dll")
+	handle, err := windows.LoadLibrary("libluajit.dll")
 	if err != nil {
 		panic(err)
 	}

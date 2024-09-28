@@ -1,4 +1,4 @@
-# Go LuaJit
+# Go LuaJIT
 
 [CGO-less](https://github.com/ebitengine/purego) bindings *(+ optional go-like wrapper)* for [LuaJit](https://luajit.org/).
 

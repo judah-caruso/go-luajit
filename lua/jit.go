@@ -5,9 +5,8 @@ const (
 	JitCopyright = "Copyright (C) 2005-2023 Mike Pall"
 )
 
-type (
-	JitMode int32
-)
+// JitMode represents a mode used to interact with the jit compiler.
+type JitMode int32
 
 const (
 	ModeEngine JitMode = iota
@@ -27,6 +26,9 @@ const (
 	ModeMask  = JitMode(0x00ff)
 )
 
+// ProfileCallback represents a function used for profiling.
+type ProfileCallback func(data uintptr, L State, samples, vmstate int32)
+
 // SetMode allows control of the VM.
 //
 // 'idx' is expected to be 0 or a stack index.
@@ -39,6 +41,24 @@ func SetMode(L State, idx int, mode JitMode) bool {
 	return jit.setmode(L, int32(idx), mode) == 1
 }
 
+// ProfileStart starts the profiler.
+func ProfileStart(L State, mode string, cb ProfileCallback, data uintptr) {
+	jit.profile_start(L, mode, cb, data)
+}
+
+// ProfileStop stops the profiler.
+func ProfileStop(L State) {
+	jit.profile_stop(L)
+}
+
+// ProfileDumpStack allows taking stack dumps in an effecient manner.
+func ProfileDumpStack(L State, fmt string, depth int, len *uint) string {
+	return jit.profile_dumpstack(L, fmt, int32(depth), len)
+}
+
 var jit struct {
-	setmode func(L State, idx int32, mode JitMode) int32 `lua:"luaJIT_setmode"`
+	setmode           func(L State, idx int32, mode JitMode) int32                 `lua:"luaJIT_setmode"`
+	profile_start     func(L State, mode string, cb ProfileCallback, data uintptr) `lua:"luaJIT_profile_start"`
+	profile_stop      func(L State)                                                `lua:"luaJIT_profile_stop"`
+	profile_dumpstack func(L State, fmt string, depth int32, len *size_t) string   `lua:"luaJIT_profile_dumpstack"`
 }

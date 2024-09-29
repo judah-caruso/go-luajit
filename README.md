@@ -1,6 +1,6 @@
 # Go LuaJIT
 
-[CGO-less](https://github.com/ebitengine/purego) bindings *(+ optional go-like wrapper)* for [LuaJit](https://luajit.org/).
+[CGO-less](https://github.com/ebitengine/purego) bindings *(+ optional Go-like wrapper)* for [LuaJit](https://luajit.org/).
 
 ## Usage
 
@@ -13,6 +13,10 @@ Copy the appropriate libraries from this directory into your project:
 - `libluajit.dll` (Windows)
 - `libluajit.dylib` (Mac)
 - `libluajit.so` (Linux)
+
+## Wrapper
+
+Aside from the 1:1 bindings (`go-luajit/lua`), an optional Go-like wrapper is provided by importing `go-luajit`. This wrapper makes LuaJIT easier to use from the Go, removing some of the underlying C-isms from the library.
 
 ## Examples
 

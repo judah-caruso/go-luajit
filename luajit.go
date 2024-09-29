@@ -1,6 +1,8 @@
 package luajit
 
-import "github.com/judah-caruso/go-luajit/lua"
+import (
+	"github.com/judah-caruso/go-luajit/lua"
+)
 
 type State lua.State
 

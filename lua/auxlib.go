@@ -7,7 +7,7 @@ type LReg struct {
 }
 
 const (
-	ErrFile = ErrErr + 1
+	ErrFile = ErrErr + 1 // A file cannot be open/read
 )
 
 // NewState creates a new Lua state.

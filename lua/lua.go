@@ -329,6 +329,19 @@ func PushClosure(L State, fn CFunction, n int) {
 	lua.pushcclosure(L, fn, int32(n))
 }
 
+// PushFString pushes onto the stack a formatted string and returns the string.
+//
+// The conversion specifiers are quite restricted. There are no flags, widths, or precisions. The conversion specifiers can only be:
+//   - '%%' (inserts a '%' in the string)
+//   - '%s' (inserts a zero-terminated string, with no size restrictions)
+//   - '%f' (inserts a Number)
+//   - '%p' (inserts a pointer as a hexadecimal numeral)
+//   - '%d' (inserts an Integer)
+//   - '%c' (inserts an Integer as a character)
+func PushFString(L State, fmt string, args ...any) string {
+	return lua.pushfstring(L, fmt, args)
+}
+
 // GetTable pushes onto the stack the value t[k],
 // where t is the value at the given valid index
 // and k is the value at the top of the stack.
@@ -614,17 +627,16 @@ var lua struct {
 	topointer   func(L State, idx int32) uintptr             `lua:"lua_topointer"`
 	tocfunction func(L State, idx int32) CFunction           `lua:"lua_tocfunction"`
 
-	pushnil           func(L State)                        `lua:"lua_pushnil"`
-	pushnumber        func(L State, n Number)              `lua:"lua_pushnumber"`
-	pushinteger       func(L State, n Integer)             `lua:"lua_pushinteger"`
-	pushlstring       func(L State, s string, l size_t)    `lua:"lua_pushlstring"`
-	pushstring        func(L State, s string)              `lua:"lua_pushstring"`
-	pushboolean       func(L State, b int32)               `lua:"lua_pushboolean"`
-	pushlightuserdata func(L State, p uintptr)             `lua:"lua_pushlightuserdata"`
-	pushthread        func(L State) int32                  `lua:"lua_pushthread"`
-	pushcclosure      func(L State, fn CFunction, n int32) `lua:"lua_pushcclosure"`
-	// LUA_API const char *(lua_pushvfstring) (lua_State *L, const char *fmt, va_list argp);
-	// LUA_API const char *(lua_pushfstring) (lua_State *L, const char *fmt, ...);
+	pushnil           func(L State)                                        `lua:"lua_pushnil"`
+	pushnumber        func(L State, n Number)                              `lua:"lua_pushnumber"`
+	pushinteger       func(L State, n Integer)                             `lua:"lua_pushinteger"`
+	pushlstring       func(L State, s string, l size_t)                    `lua:"lua_pushlstring"`
+	pushstring        func(L State, s string)                              `lua:"lua_pushstring"`
+	pushboolean       func(L State, b int32)                               `lua:"lua_pushboolean"`
+	pushlightuserdata func(L State, p uintptr)                             `lua:"lua_pushlightuserdata"`
+	pushthread        func(L State) int32                                  `lua:"lua_pushthread"`
+	pushcclosure      func(L State, fn CFunction, n int32)                 `lua:"lua_pushcclosure"`
+	pushfstring       func(L State, fmt string, args []interface{}) string `lua:"lua_pushfstring"`
 
 	gettable     func(L State, idx int32)              `lua:"lua_gettable"`
 	getfield     func(L State, idx int32, k string)    `lua:"lua_getfield"`

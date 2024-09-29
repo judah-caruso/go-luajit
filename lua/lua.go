@@ -489,8 +489,7 @@ func Concat(L State, n int) {
 	lua.concat(L, int32(n))
 }
 
-// Macro conversions
-// -----------------
+/// Macro conversions
 
 func UpvalueIndex(i int) int {
 	return int(int32(GlobalsIndex) - int32(i))
@@ -501,6 +500,7 @@ func Pop(L State, n int) {
 	lua.settop(L, -int32(n)-1)
 }
 
+// NewTable creates a new empty table and pushes it onto the stack.
 func NewTable(L State) {
 	lua.createtable(L, 0, 0)
 }
@@ -509,34 +509,43 @@ func Strlen(L State, i int) int {
 	return int(lua.objlen(L, int32(i)))
 }
 
+// IsTable returns if the value at the given acceptable index is a function.
 func IsFunction(L State, n int) bool {
 	return lua.type_(L, int32(n)) == TFunction
 }
 
+// IsTable returns if the value at the given acceptable index is a table.
 func IsTable(L State, n int) bool {
 	return lua.type_(L, int32(n)) == TTable
 }
 
+// IsLightUserdata returns if the value at the given acceptable index is a userdata (either full or light).
 func IsLightUserdata(L State, n int) bool {
 	return lua.type_(L, int32(n)) == TLightUserdata
 }
 
+// IsNil returns if the given acceptable index is nil.
 func IsNil(L State, n int) bool {
 	return lua.type_(L, int32(n)) == TNil
 }
 
+// IsBoolean returns if the given acceptable index is a boolean.
 func IsBoolean(L State, n int) bool {
 	return lua.type_(L, int32(n)) == TBoolean
 }
 
+// IsThread returns if the given acceptable index is a thread.
 func IsThread(L State, n int) bool {
 	return lua.type_(L, int32(n)) == TThread
 }
 
+// IsNone returns if the given acceptable index is not valid (that is, it refers to an element outside the current stack).
 func IsNone(L State, n int) bool {
 	return lua.type_(L, int32(n)) == TNone
 }
 
+// IsNoneOrNil returns if the given acceptable index is not valid (that is, it refers to an element outside the current stack)
+// or if the value at this index is nil.
 func IsNoneOrNil(L State, n int) bool {
 	return lua.type_(L, int32(n)) <= 0
 }
@@ -555,6 +564,7 @@ func GetRegistry(L State) {
 	lua.pushvalue(L, RegistryIndex)
 }
 
+// GetGCCount returns the current amount of memory (in Kbytes) in use by Lua.
 func GetGCCount(L State) int {
 	return int(lua.gc(L, int32(GCCount), 0))
 }

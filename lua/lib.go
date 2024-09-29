@@ -1,85 +1,98 @@
 package lua
 
 const (
-	CoLibName   = "coroutine"
-	MathLibName = "math"
-	StrLibName  = "string"
-	TabLibName  = "table"
-	IOLibName   = "io"
-	OSLibName   = "os"
-	LoadLibName = "package"
-	DBLibName   = "debug"
-	BitLibName  = "bit"
-	JitLibName  = "jit"
-	FFILibName  = "ffi"
+	CoroutineLibName = "coroutine"
+	MathLibName      = "math"
+	StringLibName    = "string"
+	TableLibName     = "table"
+	IoLibName        = "io"
+	OsLibName        = "os"
+	LoadLibName      = "package"
+	DbLibName        = "debug"
+	BitLibName       = "bit"
+	JitLibName       = "jit"
+	FfiLibName       = "ffi"
 )
 
+// OpenLibs opens all standard Lua libraries into the given state.
 func OpenLibs(L State) {
-	lib.openlibs(L)
+	lib.open_libs(L)
 }
 
+// OpenBase opens the base library into the given state.
 func OpenBase(L State) int {
-	return int(lib.openbase(L))
+	return int(lib.open_base(L))
 }
 
+// OpenMath opens the math library into the given state.
 func OpenMath(L State) int {
-	return int(lib.openmath(L))
+	return int(lib.open_math(L))
 }
 
+// OpenString opens the string library into the given state.
 func OpenString(L State) int {
-	return int(lib.openstring(L))
+	return int(lib.open_string(L))
 }
 
+// OpenTable opens the table library into the given state.
 func OpenTable(L State) int {
-	return int(lib.opentable(L))
+	return int(lib.open_table(L))
 }
 
-func OpenIO(L State) int {
-	return int(lib.openio(L))
+// OpenIo opens the io library into the given state.
+func OpenIo(L State) int {
+	return int(lib.open_io(L))
 }
 
-func OpenOS(L State) int {
-	return int(lib.openos(L))
+// OpenOs opens the os library into the given state.
+func OpenOs(L State) int {
+	return int(lib.open_os(L))
 }
 
+// OpenPackage opens the package library into the given state.
 func OpenPacakge(L State) int {
-	return int(lib.openpackage(L))
+	return int(lib.open_package(L))
 }
 
+// OpenDebug opens the debug library into the given state.
 func OpenDebug(L State) int {
-	return int(lib.opendebug(L))
+	return int(lib.open_debug(L))
 }
 
+// OpenBit opens the bit library into the given state.
 func OpenBit(L State) int {
-	return int(lib.openbit(L))
+	return int(lib.open_bit(L))
 }
 
+// OpenJit opens the jit library into the given state.
 func OpenJit(L State) int {
-	return int(lib.openjit(L))
+	return int(lib.open_jit(L))
 }
 
-func OpenFFI(L State) int {
-	return int(lib.openffi(L))
+// OpenFfi opens the ffi library into the given state.
+func OpenFfi(L State) int {
+	return int(lib.open_ffi(L))
 }
 
+// OpenStringBuilder opens the string builder library into the given state.
 func OpenStringBuffer(L State) int {
-	return int(lib.openstring_buffer(L))
+	return int(lib.open_string_buffer(L))
 }
 
 var lib struct {
 	_ nocopy
 
-	openbase          func(L State) int32 `lua:"luaopen_base"`
-	openmath          func(L State) int32 `lua:"luaopen_math"`
-	openstring        func(L State) int32 `lua:"luaopen_string"`
-	opentable         func(L State) int32 `lua:"luaopen_table"`
-	openio            func(L State) int32 `lua:"luaopen_io"`
-	openos            func(L State) int32 `lua:"luaopen_os"`
-	openpackage       func(L State) int32 `lua:"luaopen_package"`
-	opendebug         func(L State) int32 `lua:"luaopen_debug"`
-	openbit           func(L State) int32 `lua:"luaopen_bit"`
-	openjit           func(L State) int32 `lua:"luaopen_jit"`
-	openffi           func(L State) int32 `lua:"luaopen_ffi"`
-	openstring_buffer func(L State) int32 `lua:"luaopen_string_buffer"`
-	openlibs          func(L State)       `lua:"luaL_openlibs"`
+	open_base          func(L State) int32 `lua:"luaopen_base"`
+	open_math          func(L State) int32 `lua:"luaopen_math"`
+	open_string        func(L State) int32 `lua:"luaopen_string"`
+	open_table         func(L State) int32 `lua:"luaopen_table"`
+	open_io            func(L State) int32 `lua:"luaopen_io"`
+	open_os            func(L State) int32 `lua:"luaopen_os"`
+	open_package       func(L State) int32 `lua:"luaopen_package"`
+	open_debug         func(L State) int32 `lua:"luaopen_debug"`
+	open_bit           func(L State) int32 `lua:"luaopen_bit"`
+	open_jit           func(L State) int32 `lua:"luaopen_jit"`
+	open_ffi           func(L State) int32 `lua:"luaopen_ffi"`
+	open_string_buffer func(L State) int32 `lua:"luaopen_string_buffer"`
+	open_libs          func(L State)       `lua:"luaL_openlibs"`
 }

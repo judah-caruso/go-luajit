@@ -1,5 +1,6 @@
 package lua
 
+// LReg is the type used to register external functions.
 type LReg struct {
 	Name string
 	Func CFunction
@@ -9,14 +10,15 @@ const (
 	ErrFile = ErrErr + 1
 )
 
+// NewState creates a new Lua state.
 func NewState() State {
 	return luaL.newstate()
 }
 
-func OpenLib(L State, libname string, l []LReg) {
-	luaL.openlib(L, libname, &l[0], int32(len(l)))
-}
-
+// Register opens a library.
+//
+// When called with libname equal to nil,
+// it simply registers all functions in the list l into the table on the top of the stack.
 func Register(L State, libname string, l []LReg) {
 	if len(l) != 0 && l[len(l)-1].Func != nil {
 		l = append(l, LReg{Func: nil})
@@ -25,40 +27,65 @@ func Register(L State, libname string, l []LReg) {
 	luaL.register(L, libname, &l[0])
 }
 
-func GetMetaField(L State, obj int, e string) int {
-	return int(luaL.getmetafield(L, int32(obj), e))
+// GetMetaField pushes onto the stack the field e from the metatable of the object at index obj.
+// If the object does not have a metatable, or if the metatable does not have this field, returns false and pushes nothing.
+func GetMetaField(L State, obj int, e string) bool {
+	return luaL.getmetafield(L, int32(obj), e) == 1
 }
 
+// CallMeta calls a metamethod.
 func CallMeta(L State, obj int, e string) int {
 	return int(luaL.callmeta(L, int32(obj), e))
 }
 
+// TypeError generates an error with a message like the following:
+//
+//	location: bad argument narg to 'func' (tname expected, got rt)
+//
+// Where location is produced by Where, func is the name of the current function,
+// and rt is the type name of the actual argument
 func TypeError(L State, narg int, tname string) int {
 	return int(luaL.typerror(L, int32(narg), tname))
 }
 
+// ArgError raises an error with the following message:
+//
+//	bad argument #<narg> to <func> (<extramsg>)
+//
+// Where func is retrieved from the call stack.
+// This function never returns, but it is an idiom to use it in [CFunction]s as a return.
 func ArgError(L State, numarg int, extramsg string) int {
 	return int(luaL.argerror(L, int32(numarg), extramsg))
 }
 
+// LoadString loads a string as a Lua chunk.
+//
+// This function returns the same results as Load.
 func LoadString(L State, s string) int {
 	return int(luaL.loadstring(L, s))
 }
 
-// Macro conversions
+/// Macro conversions
 
+// ArgCheck checks whether cond is true.
+// If not, raises an error with the following message,
+// where func is retrieved from the call stack:
+//
+//	bad argument #<narg> to <func> (<extramsg>)
 func ArgCheck(L State, cond bool, numarg int, extramsg string) bool {
 	return cond || luaL.argerror(L, int32(numarg), extramsg) == 1
 }
 
+// CheckString checks whether the function argument numarg is a string and returns its string.
 func CheckString(L State, numarg int) string {
 	return luaL.checklstring(L, int32(numarg), nil)
 }
 
-func OptString(L State, numarg int, def string) string {
-	return luaL.optlstring(L, int32(numarg), def, nil)
+func OptString(L State, numarg int, d string) string {
+	return luaL.optlstring(L, int32(numarg), d, nil)
 }
 
+// CheckInt checks whether the function argument numarg is an integer and returns its number cast to an int.
 func CheckInt(L State, numarg int) Integer {
 	return luaL.checkinteger(L, int32(numarg))
 }
@@ -67,10 +94,12 @@ func OptInt(L State, numarg int, def Integer) Integer {
 	return luaL.optinteger(L, int32(numarg), def)
 }
 
+// TypeNameOf returns the name of the type of the value at the given index.
 func TypeNameOf(L State, idx int) string {
 	return TypeName(L, Type(L, idx))
 }
 
+// GetMetaTableFor pushes onto the stack the metatable associated with name in the registry.
 func GetMetaTableFor(L State, name string) {
 	GetField(L, RegistryIndex, name)
 }

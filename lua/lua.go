@@ -36,10 +36,13 @@ const (
 const (
 	StatusOk    = 0
 	StatusYield = 1
-	ErrRun      = 2
-	ErrSyntax   = 3
-	ErrMem      = 4
-	ErrErr      = 5
+)
+
+const (
+	ErrRun    = 2
+	ErrSyntax = 3
+	ErrMem    = 4
+	ErrErr    = 5
 )
 
 type T int32
@@ -48,12 +51,12 @@ const (
 	TNone          = T(-1)
 	TNil           = T(0)
 	TBoolean       = T(1)
-	TLightUserData = T(2)
+	TLightUserdata = T(2)
 	TNumber        = T(3)
 	TString        = T(4)
 	TTable         = T(5)
 	TFunction      = T(6)
-	TUserData      = T(7)
+	TUserdata      = T(7)
 	TThread        = T(8)
 )
 
@@ -61,16 +64,18 @@ const (
 	MinStack = 20
 )
 
+type GCMode int32
+
 const (
-	GCStop       = 0
-	GCRestart    = 1
-	GCCollect    = 2
-	GCCount      = 3
-	GCCountB     = 4
-	GCStep       = 5
-	GCSetPause   = 6
-	GCSetStepMul = 7
-	GCIsRunning  = 9
+	GCStop       = GCMode(0)
+	GCRestart    = GCMode(1)
+	GCCollect    = GCMode(2)
+	GCCount      = GCMode(3)
+	GCCountB     = GCMode(4)
+	GCStep       = GCMode(5)
+	GCSetPause   = GCMode(6)
+	GCSetStepMul = GCMode(7)
+	GCIsRunning  = GCMode(9)
 )
 
 // Open creates a new Lua state.
@@ -161,8 +166,8 @@ func IsCFunction(L State, idx int) bool {
 	return lua.iscfunction(L, int32(idx)) == 1
 }
 
-// IsUserData returns true if the value at the given acceptable index is a userdata (either full or light), and false otherwise.
-func IsUserData(L State, idx int) bool {
+// IsUserdata returns true if the value at the given acceptable index is a userdata (either full or light), and false otherwise.
+func IsUserdata(L State, idx int) bool {
 	return lua.isuserdata(L, int32(idx)) == 1
 }
 
@@ -222,50 +227,77 @@ func ToString(L State, idx int) string {
 	return ToLString(L, idx, nil)
 }
 
+// ToLString converts the Lua value at the given acceptable index to a string.
+// If len is not nil, it also sets len with the string length.
 func ToLString(L State, idx int, len *uint) string {
 	return lua.tolstring(L, int32(idx), len)
 }
 
+// ObjLen returns the "length" of the value at the given acceptable index:
+//
+//   - For strings, this is the string length
+//   - For tables, this is the result of the length operator ('#');
+//   - For userdata, this is the size of the block of memory allocated for the userdata;
+//   - For other values, it is 0.
 func ObjLen(L State, idx int) int {
 	return int(lua.objlen(L, int32(idx)))
 }
 
-func ToUserData(L State, idx int) uintptr {
+// ToUserdata returns the block address of the value at the given acceptable index if it's a full userdata.
+// If the value is a light userdata, ToUserdata returns its pointer.
+func ToUserdata(L State, idx int) uintptr {
 	return lua.touserdata(L, int32(idx))
 }
 
+// ToThread converts the value at the given acceptable index to a Lua thread (represented as a State).
 func ToThread(L State, idx int) State {
 	return lua.tothread(L, int32(idx))
 }
 
+// ToPointer converts the value at the given acceptable index to a generic pointer.
+// The value can be a userdata, a table, a thread, or a function.
+//
+// Different objects will give different pointers.
+// There is no way to convert the pointer back to its original value.
 func ToPointer(L State, idx int) uintptr {
 	return lua.topointer(L, int32(idx))
 }
 
+// ToCFunction converts a value at the given acceptable index to a CFunction.
 func ToCFunction(L State, idx int) CFunction {
 	return lua.tocfunction(L, int32(idx))
 }
 
+// PushNil pushes a nil value onto the stack.
 func PushNil(L State) {
 	lua.pushnil(L)
 }
 
+// PushNumber pushes a number with value n onto the stack.
 func PushNumber(L State, n Number) {
 	lua.pushnumber(L, n)
 }
 
+// PushInteger pushes a number with value n onto the stack.
 func PushInteger(L State, n Integer) {
 	lua.pushinteger(L, n)
 }
 
-func PushLString(L State, s string, l int) {
-	lua.pushlstring(L, s, size_t(l))
-}
-
+// PushString pushes a string with the value s onto the stack.
+//
+// Lua makes (or reuses) an internal copy of the given string.
 func PushString(L State, s string) {
 	lua.pushstring(L, s)
 }
 
+// PushLString pushes a string with the value s and the size len onto the stack.
+//
+// Lua makes (or reuses) an internal copy of the given string.
+func PushLString(L State, s string, l int) {
+	lua.pushlstring(L, s, size_t(l))
+}
+
+// PushBoolean pushes a boolean value with value b onto the stack.
 func PushBoolean(L State, b bool) {
 	var v int32 = 0
 	if b {
@@ -274,106 +306,185 @@ func PushBoolean(L State, b bool) {
 	lua.pushboolean(L, v)
 }
 
-func PushLightUserData(L State, p uintptr) {
+// PushLightUserdata pushes a light userdata onto the stack.
+func PushLightUserdata(L State, p uintptr) {
 	lua.pushlightuserdata(L, p)
 }
 
-func PushThread(L State) int {
-	return int(lua.pushthread(L))
+// PushThread pushes the thread represented by L onto the stack.
+// Returns true if this thread is the main thread of its state.
+func PushThread(L State) bool {
+	return lua.pushthread(L) == 1
 }
 
+// PushClosure pushes a new closure onto the stack.
+//
+// The maximum value for n is 255.
 func PushClosure(L State, fn CFunction, n int) {
 	lua.pushcclosure(L, fn, int32(n))
 }
 
+// GetTable pushes onto the stack the value t[k],
+// where t is the value at the given valid index
+// and k is the value at the top of the stack.
 func GetTable(L State, idx int) {
 	lua.gettable(L, int32(idx))
 }
 
+// GetField pushes onto the stack the value t[k],
+// where t is the value at the given valid index.
 func GetField(L State, idx int, k string) {
 	lua.getfield(L, int32(idx), k)
 }
 
+// RawGet similar to GetTable, but does a raw access (i.e., without metamethods).
 func RawGet(L State, idx int) {
 	lua.rawget(L, int32(idx))
 }
 
+// RawGetI pushes onto the stack the value t[n],
+// where t is the value at the given valid index.
+//
+// The access is raw; that is, it does not invoke metamethods.
 func RawGetI(L State, idx, n int) {
 	lua.rawgeti(L, int32(idx), int32(n))
 }
 
+// CreateTable creates a new empty table and pushes it onto the stack.
+// The new table has space pre-allocated for narr array elements and nrec non-array elements.
+//
+// This pre-allocation is useful when you know exactly how many elements the table will have.
+// Otherwise you can use the function NewTable.
 func CreateTable(L State, narr int, nrec int) {
 	lua.createtable(L, int32(narr), int32(nrec))
 }
 
-func NewUserData(L State, sz int) uintptr {
+// NewUserdata allocates a new block of memory with the given size,
+// pushes onto the stack a new full userdata with the block address,
+// and returns this address.
+func NewUserdata(L State, sz int) uintptr {
 	return lua.newuserdata(L, size_t(sz))
 }
 
-func GetMetaTable(L State, objindex int) int {
-	return int(lua.getmetatable(L, int32(objindex)))
+// GetMetatable pushes onto the stack the metatable of the value at the given acceptable index.
+// If the index is not valid, or if the value does not have a metatable,
+// the function returns false and pushes nothing on the stack.
+func GetMetatable(L State, objindex int) bool {
+	return lua.getmetatable(L, int32(objindex)) == 1
 }
 
+// GetFEnv pushes onto the stack the environment table of the value at the given index.
 func GetFEnv(L State, idx int) {
 	lua.getfenv(L, int32(idx))
 }
 
+// SetTable does the equivalent to t[k] = v, where t is the value at the given valid index,
+// v is the value at the top of the stack, and k is the value just below the top.
+//
+// This function pops both the key and the value from the stack.
+// As in Lua, this function may trigger a metamethod for the "newindex" event.
 func SetTable(L State, idx int) {
 	lua.settable(L, int32(idx))
 }
 
+// SetField does the equivalent to t[k] = v, where t is the value at the given valid index,
+// and v is the value at the top of the stack.
+//
+// This function pops the value from the stack.
+// As in Lua, this function may trigger a metamethod for the "newindex" event.
 func SetField(L State, idx int, k string) {
 	lua.setfield(L, int32(idx), k)
 }
 
+// RawSet similar to SetTable, but does a raw assignment (i.e., without metamethods).
 func RawSet(L State, idx int) {
 	lua.rawset(L, int32(idx))
 }
 
+// RawSetI does the equivalent of t[n] = v, where t is the value at the given valid index,
+// and v is the value at the top of the stack.
+//
+//	This function pops the value from the stack. The assignment is raw; that is, it does not invoke metamethods.
 func RawSetI(L State, idx, n int) {
 	lua.rawseti(L, int32(idx), int32(n))
 }
 
-func SetMetaTable(L State, objindex int) int {
+// SetMetatable pops a table from the stack and sets it as the new metatable for the value at the given acceptable index.
+func SetMetatable(L State, objindex int) int {
 	return int(lua.setmetatable(L, int32(objindex)))
 }
 
-func SetFEnv(L State, idx int) int {
-	return int(lua.setfenv(L, int32(idx)))
+// SetFEnv pops a table from the stack and sets it as the new environment for the value at the given index.
+//
+// If the value at the given index is neither a function nor a thread nor a userdata, SetFEnv returns false.
+// Otherwise it returns true.
+func SetFEnv(L State, idx int) bool {
+	return lua.setfenv(L, int32(idx)) == 1
 }
 
+// Call calls a function unprotected.
 func Call(L State, nargs, nresults int) {
 	lua.call(L, int32(nargs), int32(nresults))
 }
 
+// PCall calls a function in protected mode.
+//
+// If errfunc is 0, then the error message returned on the stack is exactly the original error message.
+//
+// Otherwise, errfunc is the stack index of an error handler function.
+// (In the current implementation, this index cannot be a pseudo-index.)
+// In case of runtime errors, this function will be called with the error message and
+// its return value will be the message returned on the stack by PCall.
 func PCall(L State, nargs, nresults, errfunc int) int {
 	return int(lua.pcall(L, int32(nargs), int32(nresults), int32(errfunc)))
 }
 
+// Yield yields a coroutine.
+//
+// This function should only be called as the return expression of a CFunction, as follows:
+//
+//	return Yield(L, nresults)
 func Yield(L State, nresults int) int {
 	return int(lua.yield(L, int32(nresults)))
 }
 
+// Resume starts and resumes a coroutine in a given thread.
 func Resume(L State, narg int) int {
 	return int(lua.resume(L, int32(narg)))
 }
 
+// Status returns the status of the thread L.
+//
+// The status can be StatusOk for a normal thread, an error code if the thread finished its execution with an error,
+// or StatusYield if the thread is suspended.
 func Status(L State) int {
 	return int(lua.status(L))
 }
 
-func GC(L State, what, data int) int {
+// GC controls the garbage collector.
+func GC(L State, what GCMode, data int) int {
 	return int(lua.gc(L, int32(what), int32(data)))
 }
 
+// Error generates a Lua error.
+//
+// The error message (which can actually be a Lua value of any type) must be on the stack top.
 func Error(L State) int {
 	return int(lua.error_(L))
 }
 
-func Next(L State, idx int) int {
-	return int(lua.next(L, int32(idx)))
+// Next pops a key from the stack, and pushes a key-value pair from the table at the given index (the "next" pair after the given key).
+//
+// If there are no more elements in the table, then Next returns false (and pushes nothing).
+func Next(L State, idx int) bool {
+	return lua.next(L, int32(idx)) == 1
 }
 
+// Concat concatenates the n values at the top of the stack, pops them, and leaves the result at the top.
+// If n is 1, the result is the single value on the stack (that is, the function does nothing);
+// if n is 0, the result is the empty string.
+//
+// Concatenation is performed following the usual semantics of Lua.
 func Concat(L State, n int) {
 	lua.concat(L, int32(n))
 }
@@ -385,6 +496,7 @@ func UpvalueIndex(i int) int {
 	return int(int32(GlobalsIndex) - int32(i))
 }
 
+// Pop pops n elements from the stack.
 func Pop(L State, n int) {
 	lua.settop(L, -int32(n)-1)
 }
@@ -405,8 +517,8 @@ func IsTable(L State, n int) bool {
 	return lua.type_(L, int32(n)) == TTable
 }
 
-func IsLightUserData(L State, n int) bool {
-	return lua.type_(L, int32(n)) == TLightUserData
+func IsLightUserdata(L State, n int) bool {
+	return lua.type_(L, int32(n)) == TLightUserdata
 }
 
 func IsNil(L State, n int) bool {
@@ -429,10 +541,12 @@ func IsNoneOrNil(L State, n int) bool {
 	return lua.type_(L, int32(n)) <= 0
 }
 
+// SetGlobal pops a value from the stack and sets it as the new value of global name.
 func SetGlobal(L State, s string) {
 	lua.setfield(L, GlobalsIndex, s)
 }
 
+// GetGlobal pushes onto the stack the value of the global name.
 func GetGlobal(L State, s string) {
 	lua.getfield(L, GlobalsIndex, s)
 }
@@ -442,7 +556,7 @@ func GetRegistry(L State) {
 }
 
 func GetGCCount(L State) int {
-	return int(lua.gc(L, GCCount, 0))
+	return int(lua.gc(L, int32(GCCount), 0))
 }
 
 // should this be int, uint, or uintptr?

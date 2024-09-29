@@ -16,15 +16,19 @@ const (
 	Authors    = "R. Ierusalimschy, L. H. de Figueiredo & W. Celes"
 )
 
-// Mark for precompiled code
+// Mark for precompiled code.
 const Signature = "\033Lua"
 
+// State represents a pointer to a Lua state.
+type State uintptr
+
 type (
-	State     uintptr
-	Integer   = int64
-	Number    = float64
-	CFunction func(L State) (nresults int32)
+	Integer int64   // Integer represents a Lua integer.
+	Number  float64 // Number represents a Lua number.
 )
+
+// CFunction represents a function used to interact with the Lua VM.
+type CFunction func(L State) (nresults int32)
 
 const (
 	MultRet       = -1
@@ -39,10 +43,10 @@ const (
 )
 
 const (
-	ErrRun    = 2
-	ErrSyntax = 3
-	ErrMem    = 4
-	ErrErr    = 5
+	ErrRun    = 2 // A runtime error
+	ErrSyntax = 3 // Syntax error during pre-compilation
+	ErrMem    = 4 // Memory allocation error
+	ErrErr    = 5 // Error while running the error handler function
 )
 
 type T int32
@@ -64,18 +68,19 @@ const (
 	MinStack = 20
 )
 
+// GCMode represents a mode used to interact with the Lua garbage collector.
 type GCMode int32
 
 const (
-	GCStop       = GCMode(0)
-	GCRestart    = GCMode(1)
-	GCCollect    = GCMode(2)
-	GCCount      = GCMode(3)
-	GCCountB     = GCMode(4)
-	GCStep       = GCMode(5)
-	GCSetPause   = GCMode(6)
-	GCSetStepMul = GCMode(7)
-	GCIsRunning  = GCMode(9)
+	GCStop       = GCMode(0) // Stops the garbage collector
+	GCRestart    = GCMode(1) // Restarts the garbage collector
+	GCCollect    = GCMode(2) // Performs a full garbage collection cycle
+	GCCount      = GCMode(3) // Returns the current amount of memory (in Kbytes) in use
+	GCCountB     = GCMode(4) // Returns the remainder of dividing the current memory in use by 1024
+	GCStep       = GCMode(5) // Performs an incremental step of garbage collection
+	GCSetPause   = GCMode(6) // Sets data as the new value for the pause of the collector
+	GCSetStepMul = GCMode(7) // Sets data as the new value for the step multiplier of the collector
+	GCIsRunning  = GCMode(9) // Returns if the garbage collector is running
 )
 
 // Open creates a new Lua state.

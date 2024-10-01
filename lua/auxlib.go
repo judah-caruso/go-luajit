@@ -1,5 +1,11 @@
 package lua
 
+import (
+	"unsafe"
+
+	"github.com/ebitengine/purego"
+)
+
 // LReg is the type used to register external functions.
 type LReg struct {
 	Name string
@@ -20,11 +26,21 @@ func NewState() State {
 // When called with libname equal to nil,
 // it simply registers all functions in the list l into the table on the top of the stack.
 func Register(L State, libname string, l []LReg) {
-	if len(l) != 0 && l[len(l)-1].Func != nil {
-		l = append(l, LReg{Func: nil})
+	reg := make([]lreg, len(l)+1)
+	for i, fn := range l {
+		name := ToCString(fn.Name)
+		reg[i] = lreg{
+			name: uintptr(unsafe.Pointer(&name[0])),
+			fn:   purego.NewCallback(fn.Func),
+		}
 	}
 
-	luaL.register(L, libname, &l[0])
+	reg[len(l)] = lreg{
+		name: 0,
+		fn:   0,
+	}
+
+	luaL.register(L, libname, &reg[0])
 }
 
 // GetMetaField pushes onto the stack the field e from the metatable of the object at index obj.
@@ -104,11 +120,15 @@ func GetMetaTableFor(L State, name string) {
 	GetField(L, RegistryIndex, name)
 }
 
+type lreg struct {
+	name uintptr
+	fn   uintptr
+}
+
 var luaL struct {
 	_ nocopy
 
-	openlib      func(L State, libname string, l *LReg, nup int32)  `lua:"luaL_openlib"`
-	register     func(L State, libname string, l *LReg)             `lua:"luaL_register"`
+	register     func(L State, libname string, l *lreg)             `lua:"luaL_register"`
 	getmetafield func(L State, obj int32, e string) int32           `lua:"luaL_getmetafield"`
 	callmeta     func(L State, obj int32, e string) int32           `lua:"luaL_callmeta"`
 	typerror     func(L State, narg int32, tname string) int32      `lua:"luaL_typerror"`
